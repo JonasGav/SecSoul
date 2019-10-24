@@ -11,6 +11,9 @@ using SecSoul.WebApp.Models;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using SecSoul.Core.Services;
+using SecSoul.Core.Options;
+using System.IO;
 
 namespace SecSoul.WebApp
 {
@@ -26,13 +29,18 @@ namespace SecSoul.WebApp
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            var configBuilder = new ConfigurationBuilder()
+               .SetBasePath(Directory.GetCurrentDirectory())
+               .AddJsonFile("appsettings.json", optional: true);
+            var config = configBuilder.Build();
+
             services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseSqlServer(
                     Configuration.GetConnectionString("DefaultConnection")));
 
             services.AddDefaultIdentity<ApplicationUser>()
                 .AddEntityFrameworkStores<ApplicationDbContext>();
-
+            
             services.AddIdentityServer()
                 .AddApiAuthorization<ApplicationUser, ApplicationDbContext>();
 
@@ -45,6 +53,9 @@ namespace SecSoul.WebApp
             {
                 configuration.RootPath = "ClientApp/dist";
             });
+            services.Configure<PythonOptions>(config);
+            services.AddSingleton<ScannerService>();
+            services.AddSingleton<PythonService>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
